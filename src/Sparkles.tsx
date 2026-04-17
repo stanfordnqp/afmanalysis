@@ -10,26 +10,29 @@ interface Particle {
 }
 
 const COLORS = [
-  "#FFD700", "#FF69B4", "#00CFFF", "#7CFC00", "#FF6347",
+  "#FFD700", "#FF69B4", "#FF1493", "#00CFFF", "#7CFC00", "#FF6347",
   "#C084FC", "#F9A8D4", "#67E8F9", "#86EFAC", "#FDBA74",
-  "#FDE68A", "#E0E0FF", "#ffffff",
+  "#FDE68A", "#E0E0FF", "#ffffff", "#FFAAFF", "#AAFFFF",
 ];
 
 function spawnBurst(particles: Particle[], x: number, y: number, count: number, burst = false) {
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const speed = burst ? Math.random() * 7 + 2 : Math.random() * 3 + 0.5;
+    const speed = burst ? Math.random() * 11 + 3 : Math.random() * 4 + 1;
+    // Bias toward stars (shape 0) for more sparkly look
+    const shapeRoll = Math.random();
+    const shape = (shapeRoll < 0.6 ? 0 : shapeRoll < 0.8 ? 1 : 2) as 0 | 1 | 2;
     particles.push({
       x, y,
       vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - (burst ? 3 : 1.5),
+      vy: Math.sin(angle) * speed - (burst ? 4 : 2),
       life: 1,
-      decay: burst ? Math.random() * 0.012 + 0.006 : Math.random() * 0.02 + 0.012,
-      size: burst ? Math.random() * 8 + 3 : Math.random() * 5 + 2,
+      decay: burst ? Math.random() * 0.010 + 0.005 : Math.random() * 0.018 + 0.010,
+      size: burst ? Math.random() * 10 + 4 : Math.random() * 6 + 2,
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
       rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.25,
-      shape: Math.floor(Math.random() * 3) as 0 | 1 | 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.35,
+      shape,
     });
   }
 }
@@ -53,6 +56,9 @@ function drawParticle(ctx: CanvasRenderingContext2D, p: Particle) {
   ctx.rotate(p.rotation);
   ctx.globalAlpha = Math.max(0, p.life);
   ctx.fillStyle = p.color;
+  // Glow for bright sparkle effect
+  ctx.shadowBlur = p.size * 2.5;
+  ctx.shadowColor = p.color;
   if (p.shape === 0) {
     drawStar(ctx, p.size);
   } else if (p.shape === 1) {
@@ -105,14 +111,21 @@ export default function Sparkles({ enabled }: { enabled: boolean }) {
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
   }, []);
 
-  // Click burst only — mouse move is handled by RainbowTrail
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (!enabledRef.current) return;
-      spawnBurst(particlesRef.current, e.clientX, e.clientY, 35, true);
+      spawnBurst(particlesRef.current, e.clientX, e.clientY, 55, true);
+    }
+    function onMouseUp(e: MouseEvent) {
+      if (!enabledRef.current) return;
+      spawnBurst(particlesRef.current, e.clientX, e.clientY, 30, true);
     }
     window.addEventListener("click", onClick);
-    return () => window.removeEventListener("click", onClick);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("click", onClick);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
   }, []);
 
   return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 9999 }} />;
