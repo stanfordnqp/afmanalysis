@@ -62,6 +62,7 @@ body {
 }
 .sidebar-section {
   padding: 12px 14px 4px;
+  overflow: hidden;
 }
 .sidebar-section-label {
   font-size: 11px;
@@ -161,11 +162,12 @@ input[type="range"] {
 .clim-range-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 11px;
   color: #666;
 }
-.clim-range-row input[type="number"] { width: 46px; }
+.clim-range-row input[type="number"] { width: 40px; min-width: 0; }
+.clim-range-row input[type="range"] { min-width: 0; }
 .clim-val {
   font-weight: 600;
   color: #1a1a1a;
