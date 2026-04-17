@@ -496,6 +496,59 @@ input[type="range"] {
   height: 100%;
 }
 
+/* ── expanded header action buttons ── */
+.exp-action-group {
+  display: flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+.exp-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 5px;
+  color: #666;
+  transition: background 0.1s, color 0.1s;
+}
+.exp-action-btn span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+.exp-action-btn:hover:not(:disabled) { background: #f0f0f0; color: #333; }
+.exp-action-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── rotate button overlaid top-left of canvas ── */
+.canvas-rotate-btn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.45);
+  color: white;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+.expanded-canvas-wrap:hover .canvas-rotate-btn { opacity: 1; }
+.canvas-rotate-btn:hover { background: rgba(0,0,0,0.65); }
+
 /* ── stats panel (right column in expanded view) ── */
 .expanded-stats-panel {
   width: 200px;
@@ -549,10 +602,8 @@ input[type="range"] {
 }
 .stat-info-btn:hover { color: #3b82f6; }
 .stat-info-popup {
-  position: absolute;
-  right: 22px;   /* opens to the LEFT of the ⓘ button */
-  top: -4px;
-  width: 200px;
+  position: fixed;   /* portal-rendered, positioned via inline style */
+  width: 210px;
   background: #1e293b;
   color: #e2e8f0;
   font-size: 11px;
@@ -560,7 +611,7 @@ input[type="range"] {
   padding: 8px 10px;
   border-radius: 7px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-  z-index: 100;
+  z-index: 500;
 }
 
 /* ── modals ── */

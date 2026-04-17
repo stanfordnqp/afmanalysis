@@ -396,7 +396,8 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
 }) {
   const dataCanvasRef = useRef<HTMLCanvasElement>(null);
   const scaleBarCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [copying, setCopying] = useState<null | "scaled" | "raw">(null);
+  type Action = "copy-raw" | "copy-proc" | "dl-raw" | "dl-proc";
+  const [copying, setCopying] = useState<Action | null>(null);
 
   let maxAbs = 0;
   for (let j = 0; j < record.z.length; j++) if (Math.abs(record.z[j]) > maxAbs) maxAbs = Math.abs(record.z[j]);
@@ -435,24 +436,25 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
     return () => obs.disconnect();
   }, [record.scanUm]);
 
-  async function doCopy(raw: boolean) {
-    setCopying(raw ? "raw" : "scaled");
+  async function doAction(action: Action) {
+    setCopying(action);
+    const raw = action === "copy-raw" || action === "dl-raw";
+    const isDownload = action === "dl-raw" || action === "dl-proc";
     try {
-      let blob: Blob;
-      if (raw) {
-        blob = await new Promise<Blob>((res) => dataCanvasRef.current!.toBlob((b) => res(b!), "image/png"));
+      const cvs = raw
+        ? dataCanvasRef.current!
+        : renderScanForExport(record.z, record.side, record.scanUm, -lim, lim, opts.doClip, Math.max(record.side, 800));
+      if (isDownload) {
+        const a = document.createElement("a");
+        a.href = cvs.toDataURL("image/png");
+        a.download = `${record.label}${raw ? "_raw" : ""}.png`;
+        a.click();
       } else {
-        const size = Math.max(record.side, 800);
-        const out = renderScanForExport(record.z, record.side, record.scanUm, -lim, lim, opts.doClip, size);
-        blob = await new Promise<Blob>((res) => out.toBlob((b) => res(b!), "image/png"));
+        const blob = await new Promise<Blob>((res) => cvs.toBlob((b) => res(b!), "image/png"));
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
       }
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-    } catch {
-      const cvs = raw ? dataCanvasRef.current! : renderScanForExport(record.z, record.side, record.scanUm, -lim, lim, opts.doClip, Math.max(record.side, 800));
-      const a = document.createElement("a");
-      a.href = cvs.toDataURL("image/png");
-      a.download = `${record.label}${raw ? "_raw" : ""}.png`;
-      a.click();
+    } catch (e) {
+      console.error(e);
     } finally {
       setCopying(null);
     }
@@ -471,20 +473,34 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
           title="Click to rename"
           style={{ fontSize: 15, fontWeight: 700, maxWidth: 220 }}
         />
-        <button className="icon-btn" onClick={onRotate} title="Rotate 90° clockwise" style={{ marginLeft: 4 }}>↻</button>
-        <button className="icon-btn" onClick={() => doCopy(false)} title="Copy with scale bar" disabled={copying !== null}>
-          {copying === "scaled" ? "…" : <CopyIcon />}
-        </button>
-        <button className="icon-btn" onClick={() => doCopy(true)} title="Copy raw" disabled={copying !== null} style={{ fontSize: 10, fontWeight: 600 }}>
-          {copying === "raw" ? "…" : "raw"}
-        </button>
+        {/* copy / download group */}
+        <div className="exp-action-group">
+          <button className="exp-action-btn" onClick={() => doAction("copy-raw")} disabled={copying !== null} title="Copy raw (no scale bar)">
+            {copying === "copy-raw" ? "…" : <CopyIcon />}
+            <span>raw</span>
+          </button>
+          <button className="exp-action-btn" onClick={() => doAction("copy-proc")} disabled={copying !== null} title="Copy processed (with scale bar)">
+            {copying === "copy-proc" ? "…" : <CopyIcon />}
+            <span>proc</span>
+          </button>
+          <button className="exp-action-btn" onClick={() => doAction("dl-raw")} disabled={copying !== null} title="Download raw PNG">
+            {copying === "dl-raw" ? "…" : <DownloadIcon />}
+            <span>raw</span>
+          </button>
+          <button className="exp-action-btn" onClick={() => doAction("dl-proc")} disabled={copying !== null} title="Download processed PNG">
+            {copying === "dl-proc" ? "…" : <DownloadIcon />}
+            <span>proc</span>
+          </button>
+        </div>
         <span style={{ fontSize: 11, color: "#bbb", marginLeft: "auto" }}>{record.filename}</span>
       </div>
       <div className="expanded-body">
         <div className="expanded-canvas-area">
-          <div className="card-canvas-wrap expanded-canvas-wrap">
+          <div className="card-canvas-wrap expanded-canvas-wrap" style={{ position: "relative" }}>
             <canvas ref={dataCanvasRef} className="data-canvas" />
             <canvas ref={scaleBarCanvasRef} className="scalebar-canvas" />
+            {/* Rotate button — top-left corner of the image */}
+            <button className="canvas-rotate-btn" onClick={onRotate} title="Rotate 90° clockwise">↻</button>
           </div>
         </div>
         <div className="expanded-stats-panel">
@@ -510,26 +526,36 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
 // ── StatRow ───────────────────────────────────────────────────────────────────
 
 function StatRow({ label, value, info }: { label: string; value: string; info: string }) {
-  const [show, setShow] = useState(false);
-  const wrapRef = useRef<HTMLSpanElement>(null);
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!show) return;
+    if (!pos) return;
     function onClickOutside(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setShow(false);
+      if (btnRef.current && !btnRef.current.contains(e.target as Node)) setPos(null);
     }
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [show]);
+  }, [pos]);
+
+  function toggle() {
+    if (pos) { setPos(null); return; }
+    const r = btnRef.current!.getBoundingClientRect();
+    // anchor top-right of popup to just left of the button
+    setPos({ top: r.top, right: window.innerWidth - r.left + 6 });
+  }
 
   return (
     <div className="stat-row">
       <span className="stat-label">{label}</span>
       <span className="stat-value">{value}</span>
-      <span className="stat-info-wrap" ref={wrapRef}>
-        <button className="stat-info-btn" onClick={() => setShow(v => !v)} title={info}>ⓘ</button>
-        {show && <div className="stat-info-popup">{info}</div>}
-      </span>
+      <button ref={btnRef} className="stat-info-btn" onClick={toggle} title={info}>ⓘ</button>
+      {pos && createPortal(
+        <div className="stat-info-popup" style={{ top: pos.top, right: pos.right }}>
+          {info}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -566,6 +592,15 @@ function CopyIcon() {
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
       <rect x="5" y="5" width="9" height="9" rx="1.5"/>
       <path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/>
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M8 2v9M4 7l4 4 4-4"/>
+      <path d="M2 13h12"/>
     </svg>
   );
 }
