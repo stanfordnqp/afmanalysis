@@ -511,18 +511,24 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
 
 function StatRow({ label, value, info }: { label: string; value: string; info: string }) {
   const [show, setShow] = useState(false);
+  const wrapRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!show) return;
+    function onClickOutside(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setShow(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [show]);
+
   return (
     <div className="stat-row">
       <span className="stat-label">{label}</span>
       <span className="stat-value">{value}</span>
-      <span className="stat-info-wrap">
+      <span className="stat-info-wrap" ref={wrapRef}>
         <button className="stat-info-btn" onClick={() => setShow(v => !v)} title={info}>ⓘ</button>
-        {show && (
-          <div className="stat-info-popup">
-            {info}
-            <button className="stat-info-close" onClick={() => setShow(false)}>✕</button>
-          </div>
-        )}
+        {show && <div className="stat-info-popup">{info}</div>}
       </span>
     </div>
   );
