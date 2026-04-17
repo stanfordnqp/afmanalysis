@@ -154,3 +154,69 @@ function fmt(n: number): string {
   const decimals = Math.max(0, 2 - mag);
   return n.toFixed(decimals);
 }
+
+// Vertical colormap scale bar drawn to the right of a scan image.
+// dark=true for on-screen (dark bg), dark=false for export (white bg).
+export function drawColorbar(
+  ctx: CanvasRenderingContext2D,
+  vmin: number,
+  vmax: number,
+  totalW: number,
+  totalH: number,
+  dark = true
+): void {
+  const stripW = 14;
+  const padV = Math.round(totalH * 0.07);
+  const stripH = Math.max(20, totalH - 2 * padV);
+  const stripX = 5;
+  const stripY = Math.round((totalH - stripH) / 2);
+
+  const imgData = ctx.createImageData(stripW, stripH);
+  for (let y = 0; y < stripH; y++) {
+    const t = 1 - y / Math.max(1, stripH - 1);
+    const idx = Math.round(t * 255);
+    const r = AFMHOT_LUT[idx * 3], g = AFMHOT_LUT[idx * 3 + 1], b = AFMHOT_LUT[idx * 3 + 2];
+    for (let x = 0; x < stripW; x++) {
+      const i = (y * stripW + x) * 4;
+      imgData.data[i] = r; imgData.data[i + 1] = g; imgData.data[i + 2] = b; imgData.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, stripX, stripY);
+
+  ctx.strokeStyle = dark ? "rgba(255,255,255,0.25)" : "#bbb";
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(stripX + 0.5, stripY + 0.5, stripW - 1, stripH - 1);
+
+  const tickX = stripX + stripW;
+  ctx.strokeStyle = dark ? "rgba(255,255,255,0.4)" : "#888";
+  ctx.lineWidth = 0.5;
+  for (const frac of [0, 0.5, 1]) {
+    const y = stripY + frac * (stripH - 1) + 0.5;
+    ctx.beginPath(); ctx.moveTo(tickX, y); ctx.lineTo(tickX + 4, y); ctx.stroke();
+  }
+
+  const textX = tickX + 6;
+  const fontSize = Math.max(8, Math.round(Math.min(totalH * 0.065, 11)));
+  ctx.font = `${fontSize}px Arial, sans-serif`;
+  ctx.fillStyle = dark ? "#ccc" : "#444";
+  ctx.textAlign = "left";
+  const mid = (vmin + vmax) / 2;
+  ctx.textBaseline = "top";    ctx.fillText(fmtCbVal(vmax), textX, stripY);
+  ctx.textBaseline = "middle"; ctx.fillText(fmtCbVal(mid),  textX, stripY + stripH / 2);
+  ctx.textBaseline = "bottom"; ctx.fillText(fmtCbVal(vmin), textX, stripY + stripH);
+
+  ctx.font = `${Math.max(7, fontSize - 1)}px Arial, sans-serif`;
+  ctx.fillStyle = dark ? "#777" : "#999";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText("nm", stripX + stripW / 2, stripY - 1);
+}
+
+function fmtCbVal(v: number): string {
+  const abs = Math.abs(v);
+  if (abs < 0.005) return "0";
+  const sign = v > 0 ? "+" : "";
+  if (abs >= 100) return `${sign}${Math.round(v)}`;
+  if (abs >= 10)  return `${sign}${v.toFixed(1)}`;
+  return `${sign}${v.toFixed(2)}`;
+}

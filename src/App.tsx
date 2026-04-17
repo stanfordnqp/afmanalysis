@@ -16,7 +16,7 @@ import Sparkles from "./Sparkles";
 import RainbowTrail from "./RainbowTrail";
 import { parseParkTiff } from "./tiff";
 import { reprocess, computeRms } from "./processing";
-import { toImageData, renderScanForExport, drawScaleBar } from "./colormap";
+import { toImageData, renderScanForExport, drawScaleBar, drawColorbar } from "./colormap";
 import type { ScanRecord, ProcessingOptions } from "./types";
 
 const DEFAULT_OPTS: ProcessingOptions = {
@@ -96,8 +96,15 @@ export default function App() {
       (f) => f.name.toLowerCase().endsWith(".tiff") || f.name.toLowerCase().endsWith(".tif")
     );
     if (!arr.length) return;
+    const existingNames = new Set(scans.map((s) => s.filename));
+    const dupes = arr.filter((f) => existingNames.has(f.name));
+    if (dupes.length) {
+      alert(`Already loaded — skipped:\n${dupes.map((f) => f.name).join("\n")}`);
+    }
+    const toLoad = arr.filter((f) => !existingNames.has(f.name));
+    if (!toLoad.length) return;
     const newScans: ScanRecord[] = [];
-    for (const file of arr) {
+    for (const file of toLoad) {
       try {
         const buf = await file.arrayBuffer();
         const { data, side, scanUm } = parseParkTiff(buf, file.name);
@@ -180,11 +187,21 @@ export default function App() {
     const statsH = 30;
     const gap = 20;
     const padding = 24;
+    const colorbarW = 62;
+    const colorbarGap = 8;
 
-    const cellW = scanSize;
+    const cellW = scanSize + colorbarGap + colorbarW;
     const cellH = scanSize + titleH + statsH;
+
+    const procParts: string[] = [];
+    if (opts.doPlane) procParts.push(`Plane leveling (σ = ${opts.planeSigma})`);
+    if (opts.doLines) procParts.push("Row leveling");
+    if (opts.doClip) procParts.push(`Color range ±${opts.climSigma}σ`);
+    const procText = procParts.join("  ·  ");
+    const footerH = 42;
+
     const W = cols * cellW + (cols - 1) * gap + 2 * padding;
-    const H = rows * cellH + (rows - 1) * gap + 2 * padding;
+    const H = rows * cellH + (rows - 1) * gap + 2 * padding + footerH;
 
     const canvas = document.createElement("canvas");
     canvas.width = W;
@@ -206,6 +223,11 @@ export default function App() {
       const scanCanvas = renderScanForExport(r.z, r.side, r.scanUm, -lim, lim, opts.doClip, scanSize);
       ctx.drawImage(scanCanvas, x, y + titleH);
 
+      ctx.save();
+      ctx.translate(x + scanSize + colorbarGap, y + titleH);
+      drawColorbar(ctx, -lim, lim, colorbarW, scanSize, false);
+      ctx.restore();
+
       ctx.fillStyle = "#111";
       ctx.font = "bold 18px sans-serif";
       ctx.textAlign = "center";
@@ -219,6 +241,26 @@ export default function App() {
       ctx.font = "13px sans-serif";
       ctx.fillText(parts.join("   "), x + cellW / 2, y + titleH + scanSize + statsH / 2);
     });
+
+    // footer
+    const footerY = H - footerH;
+    ctx.strokeStyle = "#e0e0e0";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(padding, footerY + 6); ctx.lineTo(W - padding, footerY + 6);
+    ctx.stroke();
+    if (procText) {
+      ctx.fillStyle = "#aaa";
+      ctx.font = "11px Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(procText, W / 2, footerY + 12);
+    }
+    ctx.fillStyle = "#c0c0c0";
+    ctx.font = "italic 10px Arial, sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("ayeahfeminist", W - padding, H - 6);
 
     canvas.toBlob((blob) => {
       if (!blob) return;
@@ -396,6 +438,7 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
 }) {
   const dataCanvasRef = useRef<HTMLCanvasElement>(null);
   const scaleBarCanvasRef = useRef<HTMLCanvasElement>(null);
+  const colorbarCanvasRef = useRef<HTMLCanvasElement>(null);
   type Action = "copy-data" | "copy-figure" | "dl-data" | "dl-figure";
   const [copying, setCopying] = useState<Action | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -438,6 +481,32 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
     return () => obs.disconnect();
   }, [record.scanUm]);
 
+  useEffect(() => {
+    const dataCanvas = dataCanvasRef.current;
+    const cbCanvas = colorbarCanvasRef.current;
+    if (!dataCanvas || !cbCanvas) return;
+    function redraw() {
+      if (!dataCanvas || !cbCanvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const h = dataCanvas.clientHeight;
+      const w = cbCanvas.clientWidth;
+      if (!h || !w) return;
+      cbCanvas.style.height = h + "px";
+      cbCanvas.width = Math.round(w * dpr);
+      cbCanvas.height = Math.round(h * dpr);
+      const ctx = cbCanvas.getContext("2d")!;
+      ctx.clearRect(0, 0, cbCanvas.width, cbCanvas.height);
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      drawColorbar(ctx, -lim, lim, w, h);
+      ctx.restore();
+    }
+    const obs = new ResizeObserver(redraw);
+    obs.observe(dataCanvas);
+    redraw();
+    return () => obs.disconnect();
+  }, [lim]);
+
   function showToast(msg: string) {
     setToast(msg);
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -449,29 +518,65 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
     const titleH = 40;
     const statsH = 32;
     const pad = 20;
-    const W = scanSize + 2 * pad;
-    const H = titleH + scanSize + statsH + 2 * pad;
+    const colorbarW = 62;
+    const colorbarGap = 8;
+
+    const procParts: string[] = [];
+    if (opts.doPlane) procParts.push(`Plane leveling (σ = ${opts.planeSigma})`);
+    if (opts.doLines) procParts.push("Row leveling");
+    if (opts.doClip) procParts.push(`Color range ±${opts.climSigma}σ`);
+    const procText = procParts.join("  ·  ");
+    const footerH = 42;
+
+    const W = 2 * pad + scanSize + colorbarGap + colorbarW;
+    const H = 2 * pad + titleH + scanSize + statsH + footerH;
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     const ctx = c.getContext("2d")!;
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, W, H);
-    // title
+
     ctx.fillStyle = "#111";
     ctx.font = "bold 20px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(record.label, W / 2, pad + titleH / 2);
-    // scan with scale bar
+
     const scanCvs = renderScanForExport(record.z, record.side, record.scanUm, -lim, lim, opts.doClip, scanSize);
     ctx.drawImage(scanCvs, pad, pad + titleH);
-    // stats
+
+    ctx.save();
+    ctx.translate(pad + scanSize + colorbarGap, pad + titleH);
+    drawColorbar(ctx, -lim, lim, colorbarW, scanSize, false);
+    ctx.restore();
+
     const parts = [`Rq = ${fmt(record.rms)} nm`];
     if (opts.doClip) parts.push(`Rq* = ${fmt(record.rmsClipped)} nm`);
     parts.push(`PtP = ${fmt(record.ptp)} nm`, `${record.scanUm[0]}×${record.scanUm[1]} µm`);
     ctx.fillStyle = "#555";
     ctx.font = "13px sans-serif";
+    ctx.textAlign = "center";
     ctx.fillText(parts.join("   "), W / 2, pad + titleH + scanSize + statsH / 2);
+
+    const footerY = H - footerH;
+    ctx.strokeStyle = "#e0e0e0";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(pad, footerY + 6); ctx.lineTo(W - pad, footerY + 6);
+    ctx.stroke();
+    if (procText) {
+      ctx.fillStyle = "#aaa";
+      ctx.font = "11px Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(procText, W / 2, footerY + 12);
+    }
+    ctx.fillStyle = "#c0c0c0";
+    ctx.font = "italic 10px Arial, sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("ayeahfeminist", W - pad, H - 6);
+
     return c;
   }
 
@@ -539,9 +644,10 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
           <div className="card-canvas-wrap expanded-canvas-wrap" style={{ position: "relative" }}>
             <canvas ref={dataCanvasRef} className="data-canvas" />
             <canvas ref={scaleBarCanvasRef} className="scalebar-canvas" />
-            {/* Rotate button — top-left corner of the image */}
+            {/* Rotate button — top-right corner of the image */}
             <button className="canvas-rotate-btn" onClick={onRotate} title="Rotate 90° clockwise">↻</button>
           </div>
+          <canvas ref={colorbarCanvasRef} className="colorbar-side-canvas colorbar-expanded" />
         </div>
         <div className="expanded-stats-panel">
           <div className="expanded-stats-title">Analysis</div>

@@ -364,6 +364,23 @@ input[type="range"] {
 .icon-btn:hover { background: #f0f0f0; color: #333; }
 .icon-btn.danger:hover { background: #fee2e2; color: #dc2626; }
 
+/* ── canvas + colorbar row ── */
+.canvas-row {
+  display: flex;
+  align-items: flex-start;
+  background: #111;
+}
+.canvas-row .card-canvas-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.colorbar-side-canvas {
+  display: block;
+  width: 58px;
+  flex-shrink: 0;
+  background: #111;
+}
+
 .card-body { padding: 0; }
 .card-canvas-wrap {
   position: relative;
@@ -518,14 +535,20 @@ input[type="range"] {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   padding: 24px;
   overflow: hidden;
 }
 .expanded-canvas-wrap {
-  width: min(100%, calc(100vh - 120px));
+  width: min(calc(100% - 72px), calc(100vh - 192px));
   max-width: 100%;
   aspect-ratio: 1 / 1;
   max-height: 100%;
+}
+.colorbar-expanded {
+  width: 58px;
+  flex-shrink: 0;
+  align-self: center;
 }
 .expanded-canvas-wrap .data-canvas {
   width: 100%;

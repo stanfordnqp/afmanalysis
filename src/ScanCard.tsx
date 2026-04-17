@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ScanRecord, ProcessingOptions } from "./types";
-import { toImageData, renderScanForExport, drawScaleBar } from "./colormap";
+import { toImageData, renderScanForExport, drawScaleBar, drawColorbar } from "./colormap";
 
 interface Props {
   record: ScanRecord;
@@ -22,6 +22,7 @@ export default function ScanCard({
 }: Props) {
   const dataCanvasRef = useRef<HTMLCanvasElement>(null);
   const scaleBarCanvasRef = useRef<HTMLCanvasElement>(null);
+  const colorbarCanvasRef = useRef<HTMLCanvasElement>(null);
   const [copying, setCopying] = useState<null | "scaled" | "raw">(null);
 
   const sortable = useSortable({ id: record.id, disabled: !!isOverlay });
@@ -46,6 +47,34 @@ export default function ScanCard({
     const img = toImageData(record.z, record.side, -lim, lim, opts.doClip);
     canvas.getContext("2d")!.putImageData(img, 0, 0);
   }, [record.z, record.side, lim, opts.doClip]);
+
+  // ── render colorbar canvas to the right of the image ─────────────────────
+  useEffect(() => {
+    if (record.minimized) return;
+    const dataCanvas = dataCanvasRef.current;
+    const cbCanvas = colorbarCanvasRef.current;
+    if (!dataCanvas || !cbCanvas) return;
+    function redraw() {
+      if (!dataCanvas || !cbCanvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const h = dataCanvas.clientHeight;
+      const w = cbCanvas.clientWidth;
+      if (!h || !w) return;
+      cbCanvas.style.height = h + "px";
+      cbCanvas.width = Math.round(w * dpr);
+      cbCanvas.height = Math.round(h * dpr);
+      const ctx = cbCanvas.getContext("2d")!;
+      ctx.clearRect(0, 0, cbCanvas.width, cbCanvas.height);
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      drawColorbar(ctx, -lim, lim, w, h);
+      ctx.restore();
+    }
+    const obs = new ResizeObserver(redraw);
+    obs.observe(dataCanvas);
+    redraw();
+    return () => obs.disconnect();
+  }, [lim, record.minimized]);
 
   // ── render scale bar on HiDPI overlay canvas via ResizeObserver ───────────
   useEffect(() => {
@@ -142,27 +171,32 @@ export default function ScanCard({
         onDoubleClick={!record.minimized ? onExpand : undefined}
         title={!record.minimized ? "Double-click to expand" : undefined}
       >
-        <div className="card-canvas-wrap" style={{ position: "relative" }}>
-          <canvas ref={dataCanvasRef} className="data-canvas" />
-          <canvas ref={scaleBarCanvasRef} className="scalebar-canvas" />
-          {/* Rotate button — top-right of image */}
-          <button className="canvas-rotate-btn" onClick={(e) => { e.stopPropagation(); onRotate(); }} title="Rotate 90°">↻</button>
-          {/* Copy / download overlay — bottom of image on hover */}
+        <div className="canvas-row">
+          <div className="card-canvas-wrap" style={{ position: "relative" }}>
+            <canvas ref={dataCanvasRef} className="data-canvas" />
+            <canvas ref={scaleBarCanvasRef} className="scalebar-canvas" />
+            {/* Rotate button — top-right of image */}
+            <button className="canvas-rotate-btn" onClick={(e) => { e.stopPropagation(); onRotate(); }} title="Rotate 90°">↻</button>
+            {/* Copy / download overlay — bottom of image on hover */}
+            {!record.minimized && (
+              <div className="card-img-actions">
+                <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doCopy(true); }} disabled={copying !== null} title="Copy data">
+                  {copying === "raw" ? "…" : <CopyIcon />}<span>data</span>
+                </button>
+                <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doCopy(false); }} disabled={copying !== null} title="Copy figure">
+                  {copying === "scaled" ? "…" : <CopyIcon />}<span>figure</span>
+                </button>
+                <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doDownload(true); }} disabled={copying !== null} title="Download data">
+                  <DownloadIcon /><span>data</span>
+                </button>
+                <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doDownload(false); }} disabled={copying !== null} title="Download figure">
+                  <DownloadIcon /><span>figure</span>
+                </button>
+              </div>
+            )}
+          </div>
           {!record.minimized && (
-            <div className="card-img-actions">
-              <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doCopy(true); }} disabled={copying !== null} title="Copy data">
-                {copying === "raw" ? "…" : <CopyIcon />}<span>data</span>
-              </button>
-              <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doCopy(false); }} disabled={copying !== null} title="Copy figure">
-                {copying === "scaled" ? "…" : <CopyIcon />}<span>figure</span>
-              </button>
-              <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doDownload(true); }} disabled={copying !== null} title="Download data">
-                <DownloadIcon /><span>data</span>
-              </button>
-              <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doDownload(false); }} disabled={copying !== null} title="Download figure">
-                <DownloadIcon /><span>figure</span>
-              </button>
-            </div>
+            <canvas ref={colorbarCanvasRef} className="colorbar-side-canvas" />
           )}
         </div>
         {!record.minimized && (
