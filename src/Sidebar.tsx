@@ -61,37 +61,41 @@ export default function Sidebar({ open, onToggle: _onToggle, opts, onChange, sca
           </div>
 
           {opts.doClip && (
-            <>
-              <div style={{ marginBottom: 4, fontSize: 11, color: "#666", paddingLeft: 2 }}>
-                Color range (σ) — out of range shown in red/blue
+            <div className="clim-block">
+              <div className="clim-desc">Color range (σ) — out of range shown in red/blue</div>
+              {/* Full-width slider */}
+              <input type="range" min={opts.climMin} max={opts.climMax} step={0.25}
+                value={opts.climSigma}
+                onChange={(e) => onChange({ climSigma: parseFloat(e.target.value) })}
+                style={{ width: "100%", marginBottom: 6 }} />
+              {/* Min / σ= / Max inputs in one row */}
+              <div className="clim-inputs-row">
+                <div className="clim-input-group">
+                  <span className="clim-label">Min</span>
+                  <input type="number" min={0.05} max={opts.climMax - 0.5} step={0.25}
+                    value={opts.climMin}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value) || 0.05;
+                      onChange({ climMin: v, climSigma: Math.max(opts.climSigma, v) });
+                    }} />
+                </div>
+                <div className="clim-input-group">
+                  <span className="clim-label">σ =</span>
+                  <input type="number" id="climVal" min={opts.climMin} max={opts.climMax} step={0.25}
+                    value={opts.climSigma}
+                    onChange={(e) => onChange({ climSigma: parseFloat(e.target.value) || opts.climSigma })} />
+                </div>
+                <div className="clim-input-group">
+                  <span className="clim-label">Max</span>
+                  <input type="number" min={opts.climMin + 0.5} step={0.25}
+                    value={opts.climMax}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value) || 20;
+                      onChange({ climMax: v, climSigma: Math.min(opts.climSigma, v) });
+                    }} />
+                </div>
               </div>
-              <div className="clim-range-row" style={{ marginBottom: 4 }}>
-                <span>Min</span>
-                <input type="number" min={0.05} max={opts.climMax - 0.5} step={0.25}
-                  value={opts.climMin}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value) || 0.05;
-                    onChange({ climMin: v, climSigma: Math.max(opts.climSigma, v) });
-                  }} />
-                <input type="range" min={opts.climMin} max={opts.climMax} step={0.25}
-                  value={opts.climSigma}
-                  onChange={(e) => onChange({ climSigma: parseFloat(e.target.value) })} />
-                <input type="number" min={opts.climMin + 0.5} step={0.25}
-                  value={opts.climMax}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value) || 20;
-                    onChange({ climMax: v, climSigma: Math.min(opts.climSigma, v) });
-                  }} />
-                <span>Max</span>
-              </div>
-              <div className="clim-range-row">
-                <label htmlFor="climVal" style={{ color: "#444" }}>σ =</label>
-                <input type="number" id="climVal" min={opts.climMin} max={opts.climMax} step={0.25}
-                  value={opts.climSigma}
-                  onChange={(e) => onChange({ climSigma: parseFloat(e.target.value) || opts.climSigma })}
-                  style={{ width: 60 }} />
-              </div>
-            </>
+            </div>
           )}
 
           <div className="sidebar-divider" style={{ margin: "10px 0" }} />
