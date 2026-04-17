@@ -528,7 +528,7 @@ input[type="range"] {
 .canvas-rotate-btn {
   position: absolute;
   top: 10px;
-  left: 10px;
+  right: 10px;
   z-index: 10;
   width: 32px;
   height: 32px;
@@ -713,6 +713,32 @@ input[type="range"] {
   flex-shrink: 0;
 }
 .sparkles-pip.on { background: #c084fc; box-shadow: 0 0 6px rgba(192,132,252,0.7); }
+
+/* ── action toast ── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.action-toast {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  z-index: 300;
+  pointer-events: none;
+  animation: toast-in 0.18s ease;
+  white-space: nowrap;
+}
+.action-toast::before { content: "✓  "; }
+.action-toast.error { background: #7f1d1d; }
+.action-toast.error::before { content: ""; }
 
 /* ── toggle switch ── */
 .toggle-switch {

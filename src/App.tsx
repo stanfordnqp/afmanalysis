@@ -398,6 +398,8 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
   const scaleBarCanvasRef = useRef<HTMLCanvasElement>(null);
   type Action = "copy-raw" | "copy-proc" | "dl-raw" | "dl-proc";
   const [copying, setCopying] = useState<Action | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   let maxAbs = 0;
   for (let j = 0; j < record.z.length; j++) if (Math.abs(record.z[j]) > maxAbs) maxAbs = Math.abs(record.z[j]);
@@ -436,6 +438,12 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
     return () => obs.disconnect();
   }, [record.scanUm]);
 
+  function showToast(msg: string) {
+    setToast(msg);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2000);
+  }
+
   async function doAction(action: Action) {
     setCopying(action);
     const raw = action === "copy-raw" || action === "dl-raw";
@@ -449,12 +457,15 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
         a.href = cvs.toDataURL("image/png");
         a.download = `${record.label}${raw ? "_raw" : ""}.png`;
         a.click();
+        showToast(`Downloaded ${raw ? "raw" : "processed"}`);
       } else {
         const blob = await new Promise<Blob>((res) => cvs.toBlob((b) => res(b!), "image/png"));
         await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        showToast(`Copied ${raw ? "raw" : "processed"}`);
       }
     } catch (e) {
       console.error(e);
+      showToast("Failed ✕");
     } finally {
       setCopying(null);
     }
@@ -519,6 +530,7 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
             info="Raw pixel resolution of the AFM scan." />
         </div>
       </div>
+      {toast && <div className={`action-toast${toast.startsWith("Failed") ? " error" : ""}`}>{toast}</div>}
     </div>
   );
 }
