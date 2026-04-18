@@ -18,6 +18,7 @@ export interface ScanRecord {
   scanUm: [number, number]; // [x, y] µm
   rotation: number; // 0 | 90 | 180 | 270
   minimized: boolean;
+  isExample?: boolean;
   // computed on reprocess:
   z: Float32Array;
   rms: number;

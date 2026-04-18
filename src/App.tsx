@@ -17,7 +17,7 @@ import RainbowTrail from "./RainbowTrail";
 import FeedbackButton from "./FeedbackButton";
 import { parseParkTiff } from "./tiff";
 import { reprocess, computeRms } from "./processing";
-import { toImageData, renderScanForExport, drawScaleBar, drawColorbar } from "./colormap";
+import { toImageData, renderScanForExport, drawScaleBar, drawColorbar, drawExampleBadge } from "./colormap";
 import Colorbar from "./Colorbar";
 import type { ScanRecord, ProcessingOptions } from "./types";
 
@@ -50,6 +50,27 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  // ── load example scan on first mount ─────────────────────────────────────
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL ?? "/";
+    fetch(`${base}example.tiff`)
+      .then((r) => r.arrayBuffer())
+      .then((buf) => {
+        const { data, side, scanUm } = parseParkTiff(buf, "example.tiff");
+        const exampleOpts: ProcessingOptions = { ...DEFAULT_OPTS, doClip: true, climSigma: 2 };
+        const z = reprocess(data, side, exampleOpts, 0);
+        const { rms, rmsClipped, ptp } = computeRms(z, exampleOpts.climSigma);
+        const record: ScanRecord = {
+          id: uid(), filename: "example.tiff", label: "Example Scan",
+          zRaw: data, side, scanUm, rotation: 0, minimized: false, isExample: true,
+          z, rms, rmsClipped, ptp,
+        };
+        setScans([record]);
+      })
+      .catch((e) => console.warn("Could not load example scan:", e));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Escape closes expanded view / figure modal ────────────────────────────
   useEffect(() => {
@@ -477,6 +498,7 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
       ctx.save();
       ctx.scale(dpr, dpr);
       drawScaleBar(ctx, record.scanUm[0], w);
+      if (record.isExample) drawExampleBadge(ctx, w);
       ctx.restore();
     }
     const obs = new ResizeObserver(draw);

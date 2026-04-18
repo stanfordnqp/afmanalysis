@@ -70,6 +70,36 @@ export function toImageData(
   return new ImageData(pixels, side, side);
 }
 
+// "Example" badge drawn in the top-left of a scan canvas.
+export function drawExampleBadge(
+  ctx: CanvasRenderingContext2D,
+  canvasSize: number
+): void {
+  const fontSize = Math.round(canvasSize * 0.055);
+  ctx.font = `bold ${fontSize}px Arial, "Helvetica Neue", sans-serif`;
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+
+  const text = "Example";
+  const metrics = ctx.measureText(text);
+  const padX = canvasSize * 0.025;
+  const padY = canvasSize * 0.022;
+  const margin = canvasSize * 0.03;
+  const boxW = metrics.width + padX * 2;
+  const boxH = fontSize + padY * 2;
+  const x = margin;
+  const y = margin;
+
+  const r = 4;
+  ctx.fillStyle = "rgba(0,0,0,0.52)";
+  ctx.beginPath();
+  ctx.roundRect(x, y, boxW, boxH, r);
+  ctx.fill();
+
+  ctx.fillStyle = "white";
+  ctx.fillText(text, x + padX, y + padY);
+}
+
 export function drawScaleBar(
   ctx: CanvasRenderingContext2D,
   scanUm: number,

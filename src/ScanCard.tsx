@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ScanRecord, ProcessingOptions } from "./types";
-import { toImageData, renderScanForExport, drawScaleBar } from "./colormap";
+import { toImageData, renderScanForExport, drawScaleBar, drawExampleBadge } from "./colormap";
 import Colorbar from "./Colorbar";
 
 interface Props {
@@ -70,6 +70,7 @@ export default function ScanCard({
       ctx.save();
       ctx.scale(dpr, dpr);
       drawScaleBar(ctx, record.scanUm[0], w);
+      if (record.isExample) drawExampleBadge(ctx, w);
       ctx.restore();
     }
 
