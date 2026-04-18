@@ -14,6 +14,7 @@ import Sidebar from "./Sidebar";
 import ScanCard from "./ScanCard";
 import Sparkles from "./Sparkles";
 import RainbowTrail from "./RainbowTrail";
+import FeedbackButton from "./FeedbackButton";
 import { parseParkTiff } from "./tiff";
 import { reprocess, computeRms } from "./processing";
 import { toImageData, renderScanForExport, drawScaleBar, drawColorbar } from "./colormap";
@@ -420,6 +421,7 @@ export default function App() {
         </button>
       )}
 
+      <FeedbackButton />
       <Sparkles enabled={sparkles} />
       <RainbowTrail enabled={sparkles} />
 
