@@ -225,20 +225,12 @@ export function drawColorbar(
   ctx.textBaseline = "middle";
   ctx.fillText("nm", stripX, labelH / 2);
 
-  // gradient strip
-  drawColormapStrip(ctx, stripW, stripH);  // draws at (0,0) then we need to put it at (stripX,stripY)
-  // ↑ can't translate putImageData; redraw inline
-  const imgData = ctx.createImageData(stripW, stripH);
-  for (let y = 0; y < stripH; y++) {
-    const t = 1 - y / Math.max(1, stripH - 1);
-    const idx = Math.round(t * 255);
-    const r = AFMHOT_LUT[idx * 3], g = AFMHOT_LUT[idx * 3 + 1], b = AFMHOT_LUT[idx * 3 + 2];
-    for (let x = 0; x < stripW; x++) {
-      const i = (y * stripW + x) * 4;
-      imgData.data[i] = r; imgData.data[i + 1] = g; imgData.data[i + 2] = b; imgData.data[i + 3] = 255;
-    }
-  }
-  ctx.putImageData(imgData, stripX, stripY);
+  // gradient strip — use an offscreen canvas + drawImage so the current
+  // transform is respected (putImageData ignores transforms)
+  const tmp = document.createElement("canvas");
+  tmp.width = stripW; tmp.height = stripH;
+  drawColormapStrip(tmp.getContext("2d")!, stripW, stripH);
+  ctx.drawImage(tmp, stripX, stripY);
 
   ctx.strokeStyle = "#ccc";
   ctx.lineWidth = 0.5;
