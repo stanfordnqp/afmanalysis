@@ -154,9 +154,8 @@ input[type="range"] {
 .infotip-btn:hover { opacity: 1; }
 .infotip-box {
   position: absolute;
-  left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 0;
+  top: calc(100% + 5px);
   z-index: 200;
   background: #1a1a1a;
   color: #ddd;
