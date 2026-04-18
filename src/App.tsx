@@ -17,7 +17,7 @@ import RainbowTrail from "./RainbowTrail";
 import FeedbackButton from "./FeedbackButton";
 import { parseParkTiff } from "./tiff";
 import { reprocess, computeRms } from "./processing";
-import { toImageData, renderScanForExport, drawScaleBar, drawColorbar, drawExampleBadge } from "./colormap";
+import { toImageData, renderScanForExport, drawScaleBar, drawColorbar } from "./colormap";
 import Colorbar from "./Colorbar";
 import type { ScanRecord, ProcessingOptions } from "./types";
 
@@ -498,7 +498,6 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
       ctx.save();
       ctx.scale(dpr, dpr);
       drawScaleBar(ctx, record.scanUm[0], w);
-      if (record.isExample) drawExampleBadge(ctx, w);
       ctx.restore();
     }
     const obs = new ResizeObserver(draw);

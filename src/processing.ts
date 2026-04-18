@@ -164,6 +164,5 @@ export function reprocess(
     for (let i = 0; i < z.length; i++) z[i] -= plane[i];
   }
   if (opts.doLines) z = horizontalLineLevel(z, side);
-  for (let i = 0; i < z.length; i++) z[i] = -z[i]; // sign flip matches Python
   return z;
 }
