@@ -684,8 +684,8 @@ function StatRow({ label, value, info }: { label: string; value: string; info: s
   function toggle() {
     if (pos) { setPos(null); return; }
     const r = btnRef.current!.getBoundingClientRect();
-    // anchor top-right of popup to just left of the button
-    setPos({ top: r.top, right: window.innerWidth - r.left + 6 });
+    // anchor below the row, right-aligned to button
+    setPos({ top: r.bottom + 6, right: window.innerWidth - r.right });
   }
 
   return (
