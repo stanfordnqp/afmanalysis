@@ -192,8 +192,9 @@ export default function ScanCard({
         {!record.minimized && (
           <>
             <div className="card-stats">{statsLine}</div>
-            <div className="card-filename" title={record.filename}>{record.filename}</div>
-            {record.meta && <div className="card-meta">{record.meta}</div>}
+            <div className="card-filename" title={record.filename}>
+              {record.filename}{record.meta && <span className="card-meta-inline"> · {record.meta}</span>}
+            </div>
           </>
         )}
       </div>

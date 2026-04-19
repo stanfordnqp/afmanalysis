@@ -324,8 +324,7 @@ input[type="range"] {
   pointer-events: none;
 }
 .scan-card.minimized .card-stats,
-.scan-card.minimized .card-filename,
-.scan-card.minimized .card-meta { display: none; }
+.scan-card.minimized .card-filename { display: none; }
 
 /* New-card sparkle glow animation */
 @keyframes new-card-glow {
@@ -522,19 +521,13 @@ input[type="range"] {
 .card-filename {
   font-size: 10px;
   color: #bbb;
-  padding: 0 10px 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.card-meta {
-  font-size: 9.5px;
-  color: #555;
   padding: 0 10px 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: 0.2px;
+}
+.card-meta-inline {
+  opacity: 0.6;
 }
 
 /* ── card image action overlay (copy/download, shown on hover) ── */
