@@ -427,9 +427,9 @@ export default function App() {
           <div className="figure-modal" onClick={(e) => e.stopPropagation()}>
             <div className="figure-modal-header">
               <span style={{ fontWeight: 600, fontSize: 14 }}>Figure preview</span>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button className="modal-action-btn" onClick={copyFigure}>Copy PNG</button>
-                <button className="modal-action-btn primary" onClick={saveFigure}>Save PNG</button>
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                <button className="exp-action-btn" onClick={copyFigure} title="Copy PNG"><CopyIcon /></button>
+                <button className="exp-action-btn" onClick={saveFigure} title="Download PNG"><DownloadIcon /></button>
                 <button className="icon-btn danger" onClick={closeFigureModal} style={{ marginLeft: 4 }}>✕</button>
               </div>
             </div>
