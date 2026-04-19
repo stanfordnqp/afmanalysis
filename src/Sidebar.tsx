@@ -74,7 +74,7 @@ interface Props {
 const MAX_POLY_ORDER = 5;
 
 export default function Sidebar({ open, opts, onChange, scans, onGenerateFigure, generatingFigure, sparkles, onSparklesToggle, isExpanded }: Props) {
-  const hasScans = scans.some((s) => !s.minimized);
+  const hasScans = scans.length > 0;
   function bumpPolyOrder() {
     const cur = isNaN(opts.polyOrder) ? 1 : (opts.polyOrder ?? 1);
     if (cur >= MAX_POLY_ORDER) return;

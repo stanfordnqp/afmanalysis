@@ -11,7 +11,6 @@ interface Props {
   onRemove: () => void;
   onLabelChange: (label: string) => void;
   onRotate: () => void;
-  onMinimize: () => void;
   onExpand: () => void;
   isNew?: boolean;
   /** When true the card is rendered inside the dnd overlay — no sortable hooks needed */
@@ -19,7 +18,7 @@ interface Props {
 }
 
 export default function ScanCard({
-  record, opts, onRemove, onLabelChange, onRotate, onMinimize, onExpand, isNew, isOverlay,
+  record, opts, onRemove, onLabelChange, onRotate, onExpand, isNew, isOverlay,
 }: Props) {
   const dataCanvasRef = useRef<HTMLCanvasElement>(null);
   const scaleBarCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -65,8 +64,6 @@ export default function ScanCard({
       sbCanvas.height = Math.round(h * dpr);
       const ctx = sbCanvas.getContext("2d")!;
       ctx.clearRect(0, 0, sbCanvas.width, sbCanvas.height);
-      // Don't draw scale bar on minimized preview
-      if (record.minimized) return;
       ctx.save();
       ctx.scale(dpr, dpr);
       drawScaleBar(ctx, record.scanUm[0], w);
@@ -77,7 +74,7 @@ export default function ScanCard({
     observer.observe(dataCanvas);
     redraw();
     return () => observer.disconnect();
-  }, [record.scanUm, record.minimized]);
+  }, [record.scanUm]);
 
   // ── copy / download helpers ───────────────────────────────────────────────
   async function doCopy(data: boolean) {
@@ -106,11 +103,7 @@ export default function ScanCard({
     `PtP = ${fmt(ptp)} nm`,
   ].join("   ");
 
-  const classes = [
-    "scan-card",
-    record.minimized ? "minimized" : "",
-    isNew ? "is-new" : "",
-  ].filter(Boolean).join(" ");
+  const classes = ["scan-card", isNew ? "is-new" : ""].filter(Boolean).join(" ");
 
   return (
     <div ref={setRef} style={style} className={classes}>
@@ -133,22 +126,15 @@ export default function ScanCard({
           <button className="icon-btn" onClick={onExpand} title="Expand fullscreen">
             <ExpandIcon />
           </button>
-          <button className="icon-btn" onClick={onMinimize} title={record.minimized ? "Show" : "Hide"}>
-            {record.minimized ? <EyeOffIcon /> : <EyeIcon />}
-          </button>
           <button className="icon-btn danger" onClick={onRemove} title="Remove">✕</button>
         </div>
       </div>
-      <div
-        className="card-body"
-        onDoubleClick={!record.minimized ? onExpand : undefined}
-        title={!record.minimized ? "Double-click to expand" : undefined}
-      >
+      <div className="card-body" onDoubleClick={onExpand}>
         <div className="canvas-row">
           <div
             className="card-canvas-wrap"
             style={{ position: "relative" }}
-            onMouseMove={!record.minimized ? (e) => {
+            onMouseMove={(e) => {
               const canvas = dataCanvasRef.current;
               if (!canvas) return;
               const r = canvas.getBoundingClientRect();
@@ -157,46 +143,38 @@ export default function ScanCard({
               const ix = Math.min(record.side - 1, Math.max(0, Math.floor(px * record.side)));
               const iy = Math.min(record.side - 1, Math.max(0, Math.floor(py * record.side)));
               setCursorH({ cx: e.clientX - r.left, cy: e.clientY - r.top, v: record.z[iy * record.side + ix] });
-            } : undefined}
+            }}
             onMouseLeave={() => setCursorH(null)}
           >
             <canvas ref={dataCanvasRef} className="data-canvas" />
             <canvas ref={scaleBarCanvasRef} className="scalebar-canvas" />
-            {/* Rotate button — top-right of image */}
             <button className="canvas-rotate-btn" onClick={(e) => { e.stopPropagation(); onRotate(); }} title="Rotate 90°">↻</button>
-            {cursorH && !record.minimized && (
+            {cursorH && (
               <div className="cursor-readout" style={{ left: cursorH.cx, top: cursorH.cy }}>
                 {fmt(cursorH.v)} nm
               </div>
             )}
-            {/* Copy / download overlay — bottom of image on hover */}
-            {!record.minimized && (
-              <div className="card-img-actions">
-                <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doCopy(true); }} disabled={copying !== null} title="Copy data">
-                  {copying === "raw" ? "…" : <CopyIcon />}<span>data</span>
-                </button>
-                <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doCopy(false); }} disabled={copying !== null} title="Copy figure">
-                  {copying === "scaled" ? "…" : <CopyIcon />}<span>figure</span>
-                </button>
-                <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doDownload(true); }} disabled={copying !== null} title="Download data">
-                  <DownloadIcon /><span>data</span>
-                </button>
-                <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doDownload(false); }} disabled={copying !== null} title="Download figure">
-                  <DownloadIcon /><span>figure</span>
-                </button>
-              </div>
-            )}
-          </div>
-          {!record.minimized && <Colorbar vmin={-lim} vmax={lim} colormap={opts.colormap} />}
-        </div>
-        {!record.minimized && (
-          <>
-            <div className="card-stats">{statsLine}</div>
-            <div className="card-filename" title={record.filename}>
-              {record.filename}{record.meta && <span className="card-meta-inline"> · {record.meta}</span>}
+            <div className="card-img-actions">
+              <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doCopy(true); }} disabled={copying !== null} title="Copy data">
+                {copying === "raw" ? "…" : <CopyIcon />}<span>data</span>
+              </button>
+              <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doCopy(false); }} disabled={copying !== null} title="Copy figure">
+                {copying === "scaled" ? "…" : <CopyIcon />}<span>figure</span>
+              </button>
+              <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doDownload(true); }} disabled={copying !== null} title="Download data">
+                <DownloadIcon /><span>data</span>
+              </button>
+              <button className="card-img-btn" onClick={(e) => { e.stopPropagation(); doDownload(false); }} disabled={copying !== null} title="Download figure">
+                <DownloadIcon /><span>figure</span>
+              </button>
             </div>
-          </>
-        )}
+          </div>
+          <Colorbar vmin={-lim} vmax={lim} colormap={opts.colormap} />
+        </div>
+        <div className="card-stats">{statsLine}</div>
+        <div className="card-filename" title={record.filename}>
+          {record.filename}{record.meta && <span className="card-meta-inline"> · {record.meta}</span>}
+        </div>
       </div>
     </div>
   );
@@ -258,19 +236,3 @@ function ExpandIcon() {
   );
 }
 
-function EyeIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/>
-      <circle cx="8" cy="8" r="2"/>
-    </svg>
-  );
-}
-
-function EyeOffIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M2 2l12 12M6.7 6.7A2 2 0 0 0 9.3 9.3M4.1 4.1C2.4 5.2 1 8 1 8s2.5 5 7 5c1.4 0 2.7-.4 3.9-1.1M7 3.1C7.3 3 7.7 3 8 3c4.5 0 7 5 7 5s-.7 1.4-1.9 2.7"/>
-    </svg>
-  );
-}

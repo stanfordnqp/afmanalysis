@@ -31,7 +31,7 @@ const DEFAULT_OPTS: ProcessingOptions = {
   climMin: 0.5,
   climMax: 20,
   columns: 2,
-  colormap: "inferno" as const,
+  colormap: "afmhot" as const,
 };
 
 let idCounter = 0;
@@ -65,7 +65,7 @@ export default function App() {
         const { rms, rmsClipped, ptp } = computeRms(z, exampleOpts.climSigma);
         const record: ScanRecord = {
           id: uid(), filename: "example.tiff", label: "Example Scan",
-          zRaw: data, side, scanUm, rotation: 0, minimized: false, isExample: true,
+          zRaw: data, side, scanUm, rotation: 0, isExample: true,
           z, rms, rmsClipped, ptp, meta,
         };
         setScans([record]);
@@ -95,7 +95,7 @@ export default function App() {
   ): ScanRecord {
     const z = reprocess(zRaw, side, o, rotation);
     const { rms, rmsClipped, ptp } = computeRms(z, o.climSigma);
-    return { id, filename, label, zRaw, side, scanUm, rotation, minimized: false, z, rms, rmsClipped, ptp, meta };
+    return { id, filename, label, zRaw, side, scanUm, rotation, z, rms, rmsClipped, ptp, meta };
   }
 
   function applyOpts(prevScans: ScanRecord[], newOpts: ProcessingOptions): ScanRecord[] {
@@ -181,7 +181,6 @@ export default function App() {
       return { ...r, rotation, z, rms, rmsClipped, ptp };
     }));
   }
-  function minimizeCard(id: string) { setScans((s) => s.map((r) => r.id === id ? { ...r, minimized: !r.minimized } : r)); }
 
   // ── dnd reorder ───────────────────────────────────────────────────────────
 
@@ -201,7 +200,7 @@ export default function App() {
   // ── generate figure ───────────────────────────────────────────────────────
 
   async function generateFigure() {
-    const visible = scans.filter((s) => !s.minimized);
+    const visible = scans;
     if (!visible.length) return;
     setGeneratingFigure(true);
 
@@ -394,7 +393,6 @@ export default function App() {
                         onRemove={() => removeCard(r.id)}
                         onLabelChange={(l) => labelCard(r.id, l)}
                         onRotate={() => rotateCard(r.id)}
-                        onMinimize={() => minimizeCard(r.id)}
                         onExpand={() => setExpandedId(r.id)}
                         isNew={newIds.has(r.id)}
                       />
@@ -414,7 +412,7 @@ export default function App() {
             <div className="dnd-overlay">
               <ScanCard
                 record={draggingRecord} opts={opts}
-                onRemove={() => {}} onLabelChange={() => {}} onRotate={() => {}} onMinimize={() => {}} onExpand={() => {}}
+                onRemove={() => {}} onLabelChange={() => {}} onRotate={() => {}} onExpand={() => {}}
                 isOverlay
               />
             </div>

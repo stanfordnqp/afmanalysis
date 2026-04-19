@@ -344,21 +344,6 @@ input[type="range"] {
 }
 .scan-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
 
-/* Minimized = small card with greyed preview, ~1/3 height */
-.scan-card.minimized .card-canvas-wrap {
-  height: 72px;
-  overflow: hidden;
-}
-.scan-card.minimized .card-canvas-wrap::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(245,245,245,0.62);
-  z-index: 1;
-  pointer-events: none;
-}
-.scan-card.minimized .card-stats,
-.scan-card.minimized .card-filename { display: none; }
 
 /* New-card sparkle glow animation */
 @keyframes new-card-glow {
