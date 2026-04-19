@@ -1,6 +1,6 @@
-// Colormaps — 4 options, each a 256×3 Uint8Array LUT.
+// Colormaps — each a 256×3 Uint8Array LUT.
 
-export type ColormapName = "afmhot" | "gray" | "viridis" | "plasma";
+export type ColormapName = "afmhot" | "gray" | "viridis" | "plasma" | "magma" | "inferno" | "diverging";
 
 // Piecewise-linear interpolation between control points to build a 256-entry LUT.
 function makeLut(stops: [number, number, number, number][]): Uint8Array {
@@ -52,14 +52,49 @@ const LUTS: Record<ColormapName, Uint8Array> = {
     [0.875, 253, 195,  40],
     [1,     240, 249,  33],
   ]),
+  magma: makeLut([
+    [0,      0,   0,   4],
+    [0.125, 18,  13,  75],
+    [0.25,  67,  15, 117],
+    [0.375,118,  26, 128],
+    [0.5,  166,  54, 118],
+    [0.625,211,  84,  98],
+    [0.75, 244, 132,  79],
+    [0.875,254, 196, 136],
+    [1,    252, 253, 191],
+  ]),
+  inferno: makeLut([
+    [0,      0,   0,   4],
+    [0.125, 31,  12,  72],
+    [0.25,  85,  15, 109],
+    [0.375,139,  34,  82],
+    [0.5,  188,  55,  84],
+    [0.625,225, 100,  45],
+    [0.75, 247, 148,   8],
+    [0.875,252, 202,  98],
+    [1,    252, 255, 164],
+  ]),
+  // Diverging: blue → white (at center) → red. For symmetric data around 0.
+  diverging: makeLut([
+    [0,    33, 102, 172],
+    [0.25,103, 169, 207],
+    [0.5, 255, 255, 255],
+    [0.75,239, 138,  98],
+    [1,   178,  24,  43],
+  ]),
 };
 
 export const COLORMAP_LABELS: Record<ColormapName, string> = {
-  afmhot: "AFM Hot",
-  gray:   "Gray",
-  viridis:"Viridis",
-  plasma: "Plasma",
+  afmhot:    "AFM Hot",
+  gray:      "Gray",
+  viridis:   "Viridis",
+  plasma:    "Plasma",
+  magma:     "Magma",
+  inferno:   "Inferno",
+  diverging: "Diverging",
 };
+
+export const COLORMAP_ORDER: ColormapName[] = ["afmhot", "gray", "viridis", "plasma", "magma", "inferno", "diverging"];
 
 function lut(cm: ColormapName = "afmhot"): Uint8Array {
   return LUTS[cm];

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { drawColormapStripH, COLORMAP_LABELS } from "./colormap";
+import { drawColormapStripH, COLORMAP_LABELS, COLORMAP_ORDER } from "./colormap";
 import type { ColormapName } from "./colormap";
 import type { ProcessingOptions, ScanRecord } from "./types";
 
@@ -160,7 +160,7 @@ export default function Sidebar({ open, opts, onChange, scans, onGenerateFigure,
         <div className="sidebar-section">
           <div className="sidebar-section-label">Colormap</div>
           <div className="cmap-grid">
-            {(["afmhot", "gray", "viridis", "plasma"] as ColormapName[]).map((cm) => (
+            {COLORMAP_ORDER.map((cm) => (
               <ColormapSwatch key={cm} name={cm} selected={opts.colormap === cm} onClick={() => onChange({ colormap: cm })} />
             ))}
           </div>
