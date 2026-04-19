@@ -47,7 +47,7 @@ export default function ScanCard({
     canvas.height = record.side;
     const img = toImageData(record.z, record.side, -lim, lim, opts.doClip, opts.colormap);
     canvas.getContext("2d")!.putImageData(img, 0, 0);
-  }, [record.z, record.side, lim, opts.doClip]);
+  }, [record.z, record.side, lim, opts.doClip, opts.colormap]);
 
   // ── render scale bar on HiDPI overlay canvas via ResizeObserver ───────────
   useEffect(() => {

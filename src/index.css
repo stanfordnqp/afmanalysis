@@ -433,12 +433,12 @@ input[type="range"] {
 
 /* ── canvas + colorbar row (grid card) ── */
 .canvas-row {
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: 1fr auto;
 }
 .canvas-row .card-canvas-wrap {
-  flex: 1 1 0;
   min-width: 0;
+  aspect-ratio: 1 / 1;
 }
 
 /* ── colorbar component ── */
@@ -530,11 +530,15 @@ input[type="range"] {
 /* Raw data canvas: pixelated so AFM pixels stay sharp at any display size */
 .data-canvas {
   width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1;
+  height: 100%;
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+/* Minimized preview: keep canvas square so overflow:hidden crops cleanly */
+.scan-card.minimized .data-canvas {
+  height: auto;
+  aspect-ratio: 1 / 1;
 }
 /* Scale bar overlay canvas: HiDPI, drawn at display resolution */
 .scalebar-canvas {
