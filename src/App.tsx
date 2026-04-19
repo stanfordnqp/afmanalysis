@@ -228,10 +228,12 @@ export default function App() {
     const W = cols * cellW + (cols - 1) * gap + 2 * padding;
     const H = rows * cellH + (rows - 1) * gap + 2 * padding + footerH;
 
+    const scale = 2;
     const canvas = document.createElement("canvas");
-    canvas.width = W;
-    canvas.height = H;
+    canvas.width = W * scale;
+    canvas.height = H * scale;
     const ctx = canvas.getContext("2d")!;
+    ctx.scale(scale, scale);
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, W, H);
 
@@ -245,8 +247,8 @@ export default function App() {
       for (let j = 0; j < r.z.length; j++) if (Math.abs(r.z[j]) > maxAbs) maxAbs = Math.abs(r.z[j]);
       const lim = opts.doClip ? opts.climSigma * r.rmsClipped : maxAbs || 1;
 
-      const scanCanvas = renderScanForExport(r.z, r.side, r.scanUm, -lim, lim, opts.doClip, scanSize, opts.colormap);
-      ctx.drawImage(scanCanvas, x, y + titleH);
+      const scanCanvas = renderScanForExport(r.z, r.side, r.scanUm, -lim, lim, opts.doClip, scanSize * scale, opts.colormap);
+      ctx.drawImage(scanCanvas, x, y + titleH, scanSize, scanSize);
 
       ctx.save();
       ctx.translate(x + scanSize + colorbarGap, y + titleH);
@@ -538,9 +540,11 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
 
     const W = 2 * pad + scanSize + colorbarGap + colorbarW;
     const H = 2 * pad + titleH + scanSize + statsH + footerH;
+    const scale = 2;
     const c = document.createElement("canvas");
-    c.width = W; c.height = H;
+    c.width = W * scale; c.height = H * scale;
     const ctx = c.getContext("2d")!;
+    ctx.scale(scale, scale);
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, W, H);
 
@@ -550,8 +554,8 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
     ctx.textBaseline = "middle";
     ctx.fillText(record.label, W / 2, pad + titleH / 2);
 
-    const scanCvs = renderScanForExport(record.z, record.side, record.scanUm, -lim, lim, opts.doClip, scanSize, opts.colormap);
-    ctx.drawImage(scanCvs, pad, pad + titleH);
+    const scanCvs = renderScanForExport(record.z, record.side, record.scanUm, -lim, lim, opts.doClip, scanSize * scale, opts.colormap);
+    ctx.drawImage(scanCvs, pad, pad + titleH, scanSize, scanSize);
 
     ctx.save();
     ctx.translate(pad + scanSize + colorbarGap, pad + titleH);
