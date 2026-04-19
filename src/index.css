@@ -431,19 +431,22 @@ input[type="range"] {
 .icon-btn:hover { background: #f0f0f0; color: #333; }
 .icon-btn.danger:hover { background: #fee2e2; color: #dc2626; }
 
-/* ── canvas + colorbar row ── */
-/* flex-start keeps canvas-wrap at its natural square height;
-   colorbar uses align-self:stretch to fill exactly that height. */
+/* ── canvas + colorbar row ──
+   Colorbar is absolutely positioned so it never affects the row height.
+   Row height = canvas-wrap height = its width (aspect-ratio 1:1).
+   Colorbar top:0/bottom:0 pins it to exactly that height. */
 .canvas-row {
-  display: flex;
-  align-items: flex-start;
+  position: relative;
 }
 .canvas-row .card-canvas-wrap {
-  flex: 1 1 0;
-  min-width: 0;
+  width: calc(100% - 52px);
 }
 .canvas-row .colorbar-side {
-  align-self: stretch;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 52px;
 }
 
 /* ── colorbar component ── */
