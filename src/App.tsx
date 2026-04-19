@@ -30,7 +30,7 @@ const DEFAULT_OPTS: ProcessingOptions = {
   climMin: 0.5,
   climMax: 20,
   columns: 2,
-  colormap: "afmhot" as const,
+  colormap: "inferno" as const,
 };
 
 let idCounter = 0;

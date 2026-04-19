@@ -1,6 +1,6 @@
 // Colormaps — each a 256×3 Uint8Array LUT.
 
-export type ColormapName = "afmhot" | "gray" | "viridis" | "plasma" | "magma" | "inferno" | "diverging";
+export type ColormapName = "gray" | "viridis" | "inferno" | "diverging";
 
 // Piecewise-linear interpolation between control points to build a 256-entry LUT.
 function makeLut(stops: [number, number, number, number][]): Uint8Array {
@@ -20,12 +20,6 @@ function makeLut(stops: [number, number, number, number][]): Uint8Array {
 }
 
 const LUTS: Record<ColormapName, Uint8Array> = {
-  afmhot: makeLut([
-    [0,     0,   0,   0],
-    [0.5,  255,   0,   0],
-    [0.75, 255, 255,   0],
-    [1,    255, 255, 255],
-  ]),
   gray: makeLut([
     [0, 0, 0, 0],
     [1, 255, 255, 255],
@@ -40,28 +34,6 @@ const LUTS: Record<ColormapName, Uint8Array> = {
     [0.75,  94, 201,  98],
     [0.875,175, 220,  57],
     [1,    253, 231,  37],
-  ]),
-  plasma: makeLut([
-    [0,      13,   8, 135],
-    [0.125,  84,   2, 163],
-    [0.25,  126,   3, 168],
-    [0.375, 166,  40, 152],
-    [0.5,   204,  71, 120],
-    [0.625, 229, 107,  93],
-    [0.75,  248, 149,  64],
-    [0.875, 253, 195,  40],
-    [1,     240, 249,  33],
-  ]),
-  magma: makeLut([
-    [0,      0,   0,   4],
-    [0.125, 18,  13,  75],
-    [0.25,  67,  15, 117],
-    [0.375,118,  26, 128],
-    [0.5,  166,  54, 118],
-    [0.625,211,  84,  98],
-    [0.75, 244, 132,  79],
-    [0.875,254, 196, 136],
-    [1,    252, 253, 191],
   ]),
   inferno: makeLut([
     [0,      0,   0,   4],
@@ -85,16 +57,13 @@ const LUTS: Record<ColormapName, Uint8Array> = {
 };
 
 export const COLORMAP_LABELS: Record<ColormapName, string> = {
-  afmhot:    "AFM Hot",
   gray:      "Gray",
   viridis:   "Viridis",
-  plasma:    "Plasma",
-  magma:     "Magma",
   inferno:   "Inferno",
   diverging: "Diverging",
 };
 
-export const COLORMAP_ORDER: ColormapName[] = ["afmhot", "gray", "viridis", "plasma", "magma", "inferno", "diverging"];
+export const COLORMAP_ORDER: ColormapName[] = ["gray", "viridis", "inferno", "diverging"];
 
 function lut(cm: ColormapName = "afmhot"): Uint8Array {
   return LUTS[cm];
