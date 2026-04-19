@@ -65,7 +65,7 @@ export const COLORMAP_LABELS: Record<ColormapName, string> = {
 
 export const COLORMAP_ORDER: ColormapName[] = ["gray", "viridis", "inferno", "diverging"];
 
-function lut(cm: ColormapName = "afmhot"): Uint8Array {
+function lut(cm: ColormapName = "inferno"): Uint8Array {
   return LUTS[cm];
 }
 
@@ -75,7 +75,7 @@ export function toImageData(
   vmin: number,
   vmax: number,
   clip: boolean,
-  colormap: ColormapName = "afmhot"
+  colormap: ColormapName = "inferno"
 ): ImageData {
   const L = lut(colormap);
   const pixels = new Uint8ClampedArray(side * side * 4);
@@ -155,7 +155,7 @@ export function renderScanForExport(
   vmax: number,
   doClip: boolean,
   exportSize: number,
-  colormap: ColormapName = "afmhot"
+  colormap: ColormapName = "inferno"
 ): HTMLCanvasElement {
   const img = toImageData(z, side, vmin, vmax, doClip, colormap);
   const src = document.createElement("canvas");
@@ -175,7 +175,7 @@ export function renderScanForExport(
 export function drawColormapStrip(
   ctx: CanvasRenderingContext2D,
   w: number, h: number,
-  colormap: ColormapName = "afmhot"
+  colormap: ColormapName = "inferno"
 ): void {
   if (w <= 0 || h <= 0) return;
   const L = lut(colormap);
@@ -196,7 +196,7 @@ export function drawColormapStrip(
 export function drawColormapStripH(
   ctx: CanvasRenderingContext2D,
   w: number, h: number,
-  colormap: ColormapName = "afmhot"
+  colormap: ColormapName = "inferno"
 ): void {
   if (w <= 0 || h <= 0) return;
   const L = lut(colormap);
@@ -221,7 +221,7 @@ export function drawColorbar(
   totalW: number,
   totalH: number,
   _dark = false,
-  colormap: ColormapName = "afmhot"
+  colormap: ColormapName = "inferno"
 ): void {
   const stripW = 18;
   const labelH = 14;
