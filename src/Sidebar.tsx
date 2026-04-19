@@ -1,20 +1,36 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import type { ProcessingOptions, ScanRecord } from "./types";
 
 function InfoTip({ text }: { text: string }) {
-  const [show, setShow] = useState(false);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  const show = useCallback(() => {
+    if (btnRef.current) setRect(btnRef.current.getBoundingClientRect());
+  }, []);
+  const hide = useCallback(() => setRect(null), []);
+
   return (
     <span className="infotip-wrap">
       <button
+        ref={btnRef}
         className="infotip-btn"
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
-        onFocus={() => setShow(true)}
-        onBlur={() => setShow(false)}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
         aria-label="More info"
         tabIndex={0}
       >ⓘ</button>
-      {show && <span className="infotip-box" role="tooltip">{text}</span>}
+      {rect && createPortal(
+        <span
+          className="infotip-box"
+          role="tooltip"
+          style={{ top: rect.bottom + 6, left: rect.left }}
+        >{text}</span>,
+        document.body
+      )}
     </span>
   );
 }
