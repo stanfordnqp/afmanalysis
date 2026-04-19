@@ -290,7 +290,7 @@ export default function App() {
     ctx.font = "italic 10px Arial, sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText("ayeahfeminist", W - padding, H - 6);
+    ctx.fillText("afminism", W - padding, H - 6);
 
     canvas.toBlob((blob) => {
       if (!blob) return;
@@ -587,7 +587,7 @@ function ExpandedView({ record, opts, onClose, onRotate, onLabelChange }: {
     ctx.font = "italic 10px Arial, sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText("ayeahfeminist", W - pad, H - 6);
+    ctx.fillText("afminism", W - pad, H - 6);
 
     return c;
   }

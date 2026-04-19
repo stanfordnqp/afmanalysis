@@ -55,7 +55,7 @@ export default function Sidebar({ open, opts, onChange, scans, onGenerateFigure,
     <div className={`sidebar${open ? "" : " collapsed"}`}>
       <div className="sidebar-inner">
         <div className="sidebar-header">
-          <span className="sidebar-title">ayeahfeminist</span>
+          <span className="sidebar-title">afminism</span>
         </div>
 
         {/* ── Processing ── */}

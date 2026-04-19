@@ -25,7 +25,7 @@ export default function FeedbackButton() {
       body.trim(),
       "",
       "---",
-      "*Submitted via [ayeahfeminist](https://stanfordnqp.github.io/afmanalysis/)*",
+      "*Submitted via [afminism](https://stanfordnqp.github.io/afmanalysis/)*",
     ].join("\n");
     const params = new URLSearchParams({ body: fullBody });
     if (title.trim()) params.set("title", title.trim());
